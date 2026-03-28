@@ -1,18 +1,19 @@
 {
-  "name": "ten-ten",
+  "name": "line-cli",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "line-cli.js",
+  "bin": {
+    "line-cli": "./line-cli.js"
+  },
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "line:send": "node line-cli.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "LINE webhook + push message API",
+  "description": "LINE CLI app for pushing text messages",
   "dependencies": {
-    "axios": "^1.14.0",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1"
+    "@line/bot-sdk": "^10.6.0",
+    "dotenv": "^17.3.1"
   }
 }
