@@ -1,36 +1,148 @@
 #!/usr/bin/env node
 require('dotenv').config({ quiet: true });
 
+const fs = require('fs');
+const path = require('path');
 const line = require('@line/bot-sdk');
 
 const DEFAULT_USER_ID = 'U9c8980e7533bb6b46fb3e3c7b6d48b46';
-const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
-const channelSecret = process.env.LINE_CHANNEL_SECRET;
+const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
+const channelSecret = process.env.LINE_CHANNEL_SECRET || '';
 const to = process.env.USER_ID || DEFAULT_USER_ID;
-const text = process.argv.slice(2).join(' ').trim();
+const args = process.argv.slice(2);
+const SKILL_FILE_NAME = 'SKILL.MD';
 
-if (!channelAccessToken || !channelSecret) {
-  console.error('Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET in .env');
-  process.exit(1);
+function printUsage() {
+  console.log(
+    [
+      'Usage:',
+      '  line-cli "your message"',
+      '  line-cli --help',
+      '  line-cli --skill [question]',
+      '',
+      'Options:',
+      '  --help, -h   Show usage',
+      `  --skill      Create/read ${SKILL_FILE_NAME} and answer from it`,
+    ].join('\n'),
+  );
 }
 
-if (!text) {
-  console.error('Usage: line-cli "your message"');
-  process.exit(1);
+function getSkillTemplate() {
+  return [
+    '---',
+    'name: line-cli-skill',
+    'description: Guidance for answering users with line-cli behavior and style.',
+    '---',
+    '',
+    '# Line CLI Skill',
+    '',
+    '## Purpose',
+    '- Provide concise and friendly answers for LINE message operations.',
+    '',
+    '## Core Rules',
+    '- Keep responses short and clear.',
+    '- Confirm the exact message text before sending if ambiguous.',
+    '- Respect the default target USER_ID unless user requests another one.',
+    '',
+    '## Answer Style',
+    '- Use practical command examples.',
+    '- Mention errors with direct fixes.',
+    '',
+    '## Examples',
+    '- Send message: `line-cli "สวัสดีครับ"`',
+    '- Show help: `line-cli --help`',
+  ].join('\n');
 }
 
-const client = new line.Client({
-  channelAccessToken,
-  channelSecret,
-});
+function ensureSkillFile() {
+  const skillFilePath = path.resolve(process.cwd(), SKILL_FILE_NAME);
+  if (!fs.existsSync(skillFilePath)) {
+    fs.writeFileSync(skillFilePath, getSkillTemplate(), 'utf8');
+    console.log(`Created ${SKILL_FILE_NAME} at ${skillFilePath}`);
+  }
+  return skillFilePath;
+}
 
-async function main() {
+function answerFromMarkdown(content, question) {
+  if (!question) {
+    return content;
+  }
+
+  const sections = content.split(/\n(?=##\s+)/g);
+  const keywords = question
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  let bestSection = '';
+  let bestScore = -1;
+
+  for (const section of sections) {
+    const lower = section.toLowerCase();
+    let score = 0;
+    for (const keyword of keywords) {
+      if (lower.includes(keyword)) {
+        score += 1;
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestSection = section;
+    }
+  }
+
+  if (bestScore <= 0) {
+    return [
+      'No matching section found in SKILL.MD.',
+      '',
+      'Tip: ask with keywords from the document headings/content.',
+    ].join('\n');
+  }
+
+  return bestSection.trim();
+}
+
+async function sendLineMessage(text) {
+  if (!channelAccessToken || !channelSecret) {
+    console.error('Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET in .env');
+    process.exit(1);
+  }
+
+  const client = new line.Client({
+    channelAccessToken,
+    channelSecret,
+  });
+
   await client.pushMessage(to, {
     type: 'text',
     text,
   });
 
   console.log(`Sent message to ${to}: ${text}`);
+}
+
+async function main() {
+  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
+    printUsage();
+    return;
+  }
+
+  if (args.includes('--skill')) {
+    const skillFilePath = ensureSkillFile();
+    const markdown = fs.readFileSync(skillFilePath, 'utf8');
+    const query = args.filter((arg) => arg !== '--skill').join(' ').trim();
+    const answer = answerFromMarkdown(markdown, query);
+    console.log(answer);
+    return;
+  }
+
+  const text = args.join(' ').trim();
+  if (!text) {
+    printUsage();
+    process.exit(1);
+  }
+
+  await sendLineMessage(text);
 }
 
 main().catch((error) => {
