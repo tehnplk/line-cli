@@ -1,9 +1,21 @@
 #!/usr/bin/env node
-require('dotenv').config({ quiet: true });
-
 const fs = require('fs');
 const path = require('path');
+
+const dotenv = require('dotenv');
 const line = require('@line/bot-sdk');
+
+const envCandidates = [
+  path.resolve(__dirname, '.env'),
+  path.resolve(process.cwd(), '.env'),
+];
+
+for (const envPath of envCandidates) {
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath, quiet: true });
+    break;
+  }
+}
 
 const DEFAULT_USER_ID = 'U9c8980e7533bb6b46fb3e3c7b6d48b46';
 const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
@@ -105,7 +117,7 @@ function answerFromMarkdown(content, question) {
 
 async function sendLineMessage(text) {
   if (!channelAccessToken || !channelSecret) {
-    console.error('Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET in .env');
+    console.error('Missing LINE_CHANNEL_ACCESS_TOKEN or LINE_CHANNEL_SECRET in environment or .env');
     process.exit(1);
   }
 

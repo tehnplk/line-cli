@@ -18,6 +18,9 @@ cp .env.example .env
 - `LINE_CHANNEL_SECRET`
 - `USER_ID` (ค่าเริ่มต้นเป็น `U9c8980e7533bb6b46fb3e3c7b6d48b46`)
 
+ถ้าเรียกใช้นอกโฟลเดอร์โปรเจกต์ผ่าน `npm link` หรือคำสั่ง `line-cli` ตัวโปรแกรมจะพยายามอ่าน `.env` จากตำแหน่งของ CLI ก่อน
+และยังรับค่าจาก environment variable ของระบบได้ตามปกติด้วย
+
 ## ใช้งานแบบ CLI
 ### แบบไม่ติดตั้ง global
 ```bash
