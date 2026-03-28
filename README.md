@@ -21,7 +21,7 @@ cp .env.example .env
 ## ใช้งานแบบ CLI
 ### แบบไม่ติดตั้ง global
 ```bash
-npm run line:send -- "สวัสดีครับ"
+npm run line:send -- --send "สวัสดีครับ"
 ```
 
 ### แบบใช้คำสั่ง `line-cli` ตรงๆ ใน terminal
@@ -32,7 +32,7 @@ npm link
 
 จากนั้นใช้งานได้เลย:
 ```bash
-line-cli "สวัสดีครับ"
+line-cli --send "สวัสดีครับ"
 ```
 
 ## ตัวเลือกคำสั่ง

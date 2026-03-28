@@ -1,4 +1,4 @@
----
+﻿---
 name: line-cli-skill
 description: Guidance for answering users with line-cli behavior and style.
 ---
@@ -18,5 +18,5 @@ description: Guidance for answering users with line-cli behavior and style.
 - Mention errors with direct fixes.
 
 ## Examples
-- Send message: `line-cli "สวัสดีครับ"`
+- Send message: `line-cli --send "Hello from line-cli"`
 - Show help: `line-cli --help`

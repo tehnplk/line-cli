@@ -16,12 +16,13 @@ function printUsage() {
   console.log(
     [
       'Usage:',
-      '  line-cli "your message"',
+      '  line-cli --send "your message"',
       '  line-cli --help',
       '  line-cli --skill [question]',
       '',
       'Options:',
       '  --help, -h   Show usage',
+      '  --send       Send LINE text message to USER_ID',
       `  --skill      Create/read ${SKILL_FILE_NAME} and answer from it`,
     ].join('\n'),
   );
@@ -49,7 +50,7 @@ function getSkillTemplate() {
     '- Mention errors with direct fixes.',
     '',
     '## Examples',
-    '- Send message: `line-cli "สวัสดีครับ"`',
+    '- Send message: `line-cli --send "Hello from line-cli"`',
     '- Show help: `line-cli --help`',
   ].join('\n');
 }
@@ -136,8 +137,16 @@ async function main() {
     return;
   }
 
-  const text = args.join(' ').trim();
+  const sendIndex = args.indexOf('--send');
+  if (sendIndex === -1) {
+    console.error('Missing required option: --send');
+    printUsage();
+    process.exit(1);
+  }
+
+  const text = args.slice(sendIndex + 1).join(' ').trim();
   if (!text) {
+    console.error('Missing message text for --send');
     printUsage();
     process.exit(1);
   }
